@@ -17,7 +17,4 @@ export default defineConfig({
     'process.env.SUPABASE_KEY': JSON.stringify(process.env.SUPABASE_KEY),
     'process.env.GEMINI_API_KEY': JSON.stringify(process.env.GEMINI_API_KEY),
   },
-  build: {
-    chunkSizeWarningLimit: 2000,
-  },
 });
