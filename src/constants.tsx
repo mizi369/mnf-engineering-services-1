@@ -1,8 +1,8 @@
 
 import React from 'react';
 
-// Since we are using Vite middleware, the backend is on the same origin as the frontend
-export const BACKEND_URL = window.location.origin;
+// Use VITE_BACKEND_URL for external backend hosting (e.g., Render/Railway), fallback to same origin
+export const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || window.location.origin;
 
 console.log(`[SYSTEM] Backend Target: ${BACKEND_URL}`);
 
