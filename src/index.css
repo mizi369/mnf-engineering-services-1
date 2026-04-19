@@ -1,0 +1,64 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&family=Inter:wght@300;400;500;600;700&display=swap');
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --primary: #D32F2F;
+    --secondary: #00BCD4;
+    --bg-dark: #121212;
+    --bg-card: #1E1E1E;
+    --border: rgba(255, 255, 255, 0.05);
+  }
+
+  body {
+    @apply bg-[#121212] text-white font-sans antialiased;
+    font-family: 'Poppins', 'Inter', sans-serif;
+  }
+}
+
+@layer components {
+  .btn-primary {
+    @apply bg-[#D32F2F] text-white px-6 py-3 rounded-[8px] font-semibold transition-all duration-300 hover:shadow-[0_0_20px_rgba(0,188,212,0.4)] active:scale-95 border border-transparent hover:border-[#00BCD4]/30;
+  }
+  
+  .card-glow {
+    @apply bg-[#1E1E1E] border border-white/5 rounded-xl p-6 transition-all duration-500 hover:border-[#00BCD4]/40 hover:shadow-[0_0_30px_rgba(0,188,212,0.15)] relative overflow-hidden;
+  }
+
+  .sidebar-item {
+    @apply flex items-center gap-3 px-4 py-3 rounded-lg text-gray-400 hover:text-white hover:bg-white/5 transition-all duration-200 cursor-pointer relative overflow-hidden;
+  }
+
+  .sidebar-item.active {
+    @apply bg-[#D32F2F] text-white shadow-lg shadow-red-900/30;
+  }
+
+  .input-field {
+    @apply w-full bg-[#1A1A1A] border border-white/10 rounded-lg px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-[#00BCD4] focus:ring-1 focus:ring-[#00BCD4]/30 transition-all focus:shadow-[0_0_15px_rgba(0,188,212,0.1)];
+  }
+
+  .glass-header {
+    @apply bg-[#1E1E1E]/80 backdrop-blur-md border-b border-white/5 sticky top-0 z-50;
+  }
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #121212; 
+}
+
+::-webkit-scrollbar-thumb {
+  background: #333; 
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #D32F2F; 
+}

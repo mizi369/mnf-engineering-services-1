@@ -1,0 +1,278 @@
+/*
+MNF ENGINEERING SERVICES - MASTER DATABASE SCHEMA v23.1 (SLOT UPDATE)
+Run this script in Supabase SQL Editor.
+*/
+
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+
+-- =============================================
+-- 1. JADUAL INDUK (MASTER TABLES)
+-- =============================================
+
+-- PELANGGAN (Customers)
+CREATE TABLE IF NOT EXISTS mnf_customers (
+    id TEXT PRIMARY KEY DEFAULT uuid_generate_v4()::text,
+    name TEXT NOT NULL,
+    phone TEXT UNIQUE NOT NULL,
+    address TEXT,
+    last_service DATE,
+    total_spent NUMERIC DEFAULT 0,
+    ad_message TEXT,
+    interests JSONB DEFAULT '[]'::jsonb,
+    created_at TIMESTAMPTZ DEFAULT now()
+);
+
+-- KAKITANGAN (Employees)
+CREATE TABLE IF NOT EXISTS mnf_employees (
+    id TEXT PRIMARY KEY,
+    name TEXT NOT NULL,
+    ic_number TEXT,
+    address TEXT,
+    position TEXT, 
+    basic_salary NUMERIC DEFAULT 0,
+    type TEXT DEFAULT 'Full-time',
+    created_at TIMESTAMPTZ DEFAULT now()
+);
+
+-- PASUKAN (Teams)
+CREATE TABLE IF NOT EXISTS mnf_teams (
+    id TEXT PRIMARY KEY, 
+    name TEXT NOT NULL,
+    is_active BOOLEAN DEFAULT true,
+    max_jobs_per_day INTEGER DEFAULT 4, -- Had Keseluruhan
+    max_service_jobs INTEGER DEFAULT 3, -- Had Servis
+    max_install_jobs INTEGER DEFAULT 2, -- Had Pasang Aircond
+    created_at TIMESTAMPTZ DEFAULT now()
+);
+
+-- SLOT MASA (Time Slots)
+CREATE TABLE IF NOT EXISTS mnf_time_slots (
+    id TEXT PRIMARY KEY DEFAULT uuid_generate_v4()::text,
+    label TEXT NOT NULL, -- e.g. '9:00 AM – 12:00 PM'
+    is_active BOOLEAN DEFAULT true,
+    display_order SERIAL,
+    created_at TIMESTAMPTZ DEFAULT now()
+);
+
+-- KATALOG HARGA (Services)
+CREATE TABLE IF NOT EXISTS mnf_services (
+    id TEXT PRIMARY KEY DEFAULT uuid_generate_v4()::text,
+    name TEXT NOT NULL,
+    price DECIMAL(10, 2) NOT NULL,
+    price_end DECIMAL(10, 2),
+    description TEXT,
+    category TEXT,
+    is_active BOOLEAN DEFAULT true,
+    created_at TIMESTAMPTZ DEFAULT now()
+);
+
+-- =============================================
+-- 2. JADUAL TRANSAKSI (TRANSACTION TABLES)
+-- =============================================
+
+-- BOOKINGS (Dengan Hubungan ke Customer, Team, Slot)
+CREATE TABLE IF NOT EXISTS mnf_bookings (
+    id TEXT PRIMARY KEY DEFAULT uuid_generate_v4()::text,
+    booking_date DATE NOT NULL DEFAULT CURRENT_DATE,
+    customer_name TEXT NOT NULL,
+    address TEXT,
+    phone TEXT,
+    service_type TEXT,
+    unit_type TEXT DEFAULT '1.0HP',
+    quantity TEXT DEFAULT '1 Unit',
+    time_slot TEXT,
+    team TEXT,
+    status TEXT DEFAULT 'Confirmed',
+    lat DECIMAL(10, 8),
+    lng DECIMAL(11, 8),
+    location_lat DECIMAL(10, 8), -- New Field
+    location_lng DECIMAL(11, 8), -- New Field
+    created_at TIMESTAMPTZ DEFAULT now(),
+    
+    -- Relationships (Foreign Keys - Optional Strictness)
+    customer_id TEXT REFERENCES mnf_customers(id),
+    team_id TEXT REFERENCES mnf_teams(id),
+    time_slot_id TEXT REFERENCES mnf_time_slots(id)
+);
+
+-- JUALAN (Sales - Dengan Hubungan ke Customer & Employee)
+CREATE TABLE IF NOT EXISTS mnf_sales (
+    id TEXT PRIMARY KEY,
+    customer_name TEXT,
+    phone TEXT,
+    address TEXT,
+    service_description TEXT,
+    shop_name TEXT,
+    amount NUMERIC DEFAULT 0,
+    discount NUMERIC DEFAULT 0,
+    total NUMERIC DEFAULT 0,
+    status TEXT DEFAULT 'Pembayaran Diterima',
+    payment_method TEXT DEFAULT 'Tunai',
+    payment_type TEXT DEFAULT 'Debit',
+    date DATE DEFAULT CURRENT_DATE,
+    items_used JSONB, 
+    admin_name TEXT,
+    created_at TIMESTAMPTZ DEFAULT now(),
+
+    -- Relationships
+    customer_id TEXT REFERENCES mnf_customers(id),
+    employee_id TEXT REFERENCES mnf_employees(id)
+);
+
+-- IKLAN & PROMOSI (Dengan Target Customer)
+CREATE TABLE IF NOT EXISTS mnf_promotions (
+    id TEXT PRIMARY KEY DEFAULT uuid_generate_v4()::text,
+    title TEXT,
+    message TEXT,
+    media_data TEXT,
+    media_type TEXT DEFAULT 'none',
+    post_date DATE,
+    post_time TEXT,
+    ai_active BOOLEAN DEFAULT true,
+    target_phone TEXT,
+    target_name TEXT,
+    status TEXT DEFAULT 'Pending',
+    discount TEXT,
+    platform TEXT DEFAULT 'WhatsApp',
+    created_at TIMESTAMPTZ DEFAULT now(),
+
+    -- Relationship
+    target_customer_id TEXT REFERENCES mnf_customers(id)
+);
+
+-- =============================================
+-- 3. JADUAL SISTEM & SOKONGAN
+-- =============================================
+
+-- TETAPAN (Settings)
+CREATE TABLE IF NOT EXISTS mnf_settings (
+    id TEXT PRIMARY KEY DEFAULT uuid_generate_v4()::text,
+    setting_key TEXT UNIQUE NOT NULL,
+    setting_value TEXT,
+    description TEXT,
+    updated_at TIMESTAMPTZ DEFAULT now()
+);
+
+-- TEMPLAT MESEJ (Message Templates) - NEW!
+CREATE TABLE IF NOT EXISTS mnf_templates (
+    id TEXT PRIMARY KEY DEFAULT uuid_generate_v4()::text,
+    code TEXT UNIQUE NOT NULL, 
+    name TEXT NOT NULL,
+    content TEXT,
+    variables TEXT, 
+    updated_at TIMESTAMPTZ DEFAULT now()
+);
+
+-- Seed Templates (Jika Belum Ada)
+INSERT INTO mnf_templates (code, name, content, variables) VALUES
+('booking', 'Booking Confirmation', 'Terima kasih [NAMA], booking anda pada [DATE] telah disahkan.', '[NAMA], [DATE]'),
+('receipt', 'Resit Bayaran', 'Terima kasih. Bayaran RM [TOTAL] diterima untuk [SERVIS].', '[NAMA], [TOTAL], [SERVIS], [DATE]'),
+('pending', 'Peringatan Bayaran', 'Salam [NAMA], mohon jelaskan baki RM [TOTAL] untuk [SERVIS].', '[NAMA], [TOTAL], [SERVIS]'),
+('location', 'Lokasi Bengkel', 'Berikut adalah lokasi kami: [MAP_URL]', '[MAP_URL]'),
+('warranty', 'Waranti Servis & Alat Ganti', 'Waranti servis dan alat ganti kami adalah [TEMPOH].', '[TEMPOH]')
+ON CONFLICT (code) DO NOTHING;
+
+-- INVENTORI
+CREATE TABLE IF NOT EXISTS mnf_inventory (
+    id TEXT PRIMARY KEY,
+    shop_name TEXT,
+    item_name TEXT,
+    unit TEXT,
+    stock INTEGER DEFAULT 0,
+    buy_price NUMERIC DEFAULT 0,
+    sell_price NUMERIC DEFAULT 0,
+    status TEXT DEFAULT 'Ada',
+    payment_type TEXT,
+    payment_method TEXT,
+    updated_at TIMESTAMPTZ DEFAULT now()
+);
+
+-- PAYROLL
+CREATE TABLE IF NOT EXISTS mnf_payroll (
+    id TEXT PRIMARY KEY,
+    employee_id TEXT REFERENCES mnf_employees(id),
+    month TEXT,
+    year TEXT,
+    basic_salary NUMERIC,
+    epf_employee NUMERIC,
+    epf_employer NUMERIC,
+    socso_employee NUMERIC,
+    socso_employer NUMERIC,
+    advance NUMERIC DEFAULT 0,
+    gross NUMERIC,
+    net NUMERIC,
+    payment_method TEXT,
+    status TEXT DEFAULT 'Paid',
+    created_at TIMESTAMPTZ DEFAULT now()
+);
+
+-- EXPENSES
+CREATE TABLE IF NOT EXISTS mnf_expenses (
+    id TEXT PRIMARY KEY,
+    date DATE DEFAULT CURRENT_DATE,
+    description TEXT,
+    amount NUMERIC,
+    category TEXT,
+    payment_type TEXT,
+    payment_method TEXT,
+    created_at TIMESTAMPTZ DEFAULT now()
+);
+
+-- TRANSACTIONS (Debit/Credit)
+CREATE TABLE IF NOT EXISTS mnf_transactions (
+    id TEXT PRIMARY KEY,
+    date DATE DEFAULT CURRENT_DATE,
+    amount NUMERIC,
+    type TEXT, -- 'debit' or 'credit'
+    payment_method TEXT,
+    description TEXT,
+    source TEXT, -- 'Sales', 'Inventory', 'Payroll', 'Fuel', 'Maintenance', 'Manual'
+    created_at TIMESTAMPTZ DEFAULT now()
+);
+
+-- BLOCKED SLOTS
+CREATE TABLE IF NOT EXISTS mnf_blocked_slots (
+    id TEXT PRIMARY KEY DEFAULT uuid_generate_v4()::text,
+    date DATE NOT NULL,
+    time_slot TEXT NOT NULL,
+    reason TEXT,
+    created_at TIMESTAMPTZ DEFAULT now()
+);
+
+-- WHATSAPP LOGS
+CREATE TABLE IF NOT EXISTS mnf_chat_logs (
+    id TEXT PRIMARY KEY DEFAULT uuid_generate_v4()::text,
+    phone TEXT,
+    message TEXT,
+    direction TEXT, 
+    status TEXT, 
+    created_at TIMESTAMPTZ DEFAULT now()
+);
+
+-- AI BRAIN SYSTEM
+CREATE TABLE IF NOT EXISTS mnf_ai_questions (id TEXT PRIMARY KEY DEFAULT uuid_generate_v4()::text, category TEXT, question TEXT, source TEXT, status TEXT, created_at TIMESTAMPTZ DEFAULT now());
+CREATE TABLE IF NOT EXISTS mnf_ai_answers (id TEXT PRIMARY KEY DEFAULT uuid_generate_v4()::text, style TEXT, answer TEXT, language TEXT, status TEXT, created_at TIMESTAMPTZ DEFAULT now());
+CREATE TABLE IF NOT EXISTS mnf_ai_mappings (id TEXT PRIMARY KEY DEFAULT uuid_generate_v4()::text, question_id TEXT, answer_id TEXT, triggers TEXT, status TEXT);
+CREATE TABLE IF NOT EXISTS mnf_ai_training (id TEXT PRIMARY KEY DEFAULT uuid_generate_v4()::text, type TEXT, input TEXT, verified_by TEXT, date DATE, status TEXT);
+CREATE TABLE IF NOT EXISTS mnf_ai_locks (id TEXT PRIMARY KEY DEFAULT uuid_generate_v4()::text, key_name TEXT, function TEXT, level TEXT, active BOOLEAN);
+CREATE TABLE IF NOT EXISTS mnf_ai_learning_logs (id TEXT PRIMARY KEY DEFAULT uuid_generate_v4()::text, time TEXT, activity TEXT, change TEXT, status TEXT, created_at TIMESTAMPTZ DEFAULT now());
+
+-- =============================================
+-- 4. SECURITY & PERMISSIONS
+-- =============================================
+DO $$ 
+DECLARE 
+    t text;
+BEGIN
+    FOR t IN 
+        SELECT table_name 
+        FROM information_schema.tables 
+        WHERE table_schema = 'public' 
+          AND table_name LIKE 'mnf_%'
+          AND table_type = 'BASE TABLE'
+    LOOP
+        EXECUTE format('ALTER TABLE %I ENABLE ROW LEVEL SECURITY;', t);
+        EXECUTE format('DROP POLICY IF EXISTS "Public Access" ON %I;', t);
+        EXECUTE format('CREATE POLICY "Public Access" ON %I FOR ALL USING (true);', t);
+    END LOOP;
+END $$;

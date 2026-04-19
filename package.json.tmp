@@ -1,0 +1,51 @@
+{
+  "name": "mnf-engineering-ai-system",
+  "version": "3.2.0",
+  "description": "MNF Engineering WhatsApp AI Automation System",
+  "main": "service.js",
+  "type": "module",
+  "scripts": {
+    "start": "tsx service.ts",
+    "dev": "tsx service.ts",
+    "build": "vite build",
+    "lint": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@google/genai": "latest",
+    "@supabase/supabase-js": "^2.45.0",
+    "clsx": "^2.1.1",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "framer-motion": "^11.11.17",
+    "lucide-react": "^0.379.0",
+    "open": "^10.1.0",
+    "qrcode": "^1.5.3",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-router-dom": "^6.23.1",
+    "recharts": "^3.7.0",
+    "socket.io": "^4.7.5",
+    "socket.io-client": "^4.7.5",
+    "tailwind-merge": "^3.5.0",
+    "whatsapp-web.js": "^1.26.0"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.6",
+    "@types/node": "^25.3.5",
+    "@types/qrcode": "^1.5.6",
+    "@types/react": "^18.3.2",
+    "@types/react-dom": "^18.3.0",
+    "@vitejs/plugin-react": "^4.2.1",
+    "autoprefixer": "^10.4.19",
+    "nodemon": "^3.1.0",
+    "postcss": "^8.4.38",
+    "tailwindcss": "^3.4.3",
+    "tsx": "^4.10.0",
+    "typescript": "^5.4.5",
+    "vite": "^5.2.11"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
