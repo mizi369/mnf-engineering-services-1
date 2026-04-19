@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { HashRouter, Routes, Route, Navigate, Link, useLocation } from 'react-router-dom';
+import { Routes, Route, Navigate, Link, useLocation, useNavigate } from 'react-router-dom';
 import { 
   LayoutDashboard, 
   Users, 
@@ -90,6 +90,8 @@ const SidebarLink: React.FC<SidebarLinkProps> = ({ icon, label, to, collapsed, b
 };
 
 const App: React.FC = () => {
+  const navigate = useNavigate();
+  const location = useLocation();
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => localStorage.getItem('mnf_auth') === 'true');
   const [role, setRole] = useState<string>(() => localStorage.getItem('mnf_role') || 'admin');
   const [isSidebarOpen, setIsSidebarOpen] = useState(true); 
@@ -208,8 +210,22 @@ const App: React.FC = () => {
     // STARTUP SYNC
     const initSystem = async () => {
         setIsLoading(true);
-        await db.init(); // Fetch data from Supabase
-        setIsLoading(false);
+        
+        // Safety timeout to prevent black screen if sync hangs
+        const loaderTimeout = setTimeout(() => {
+            console.warn('[SYSTEM] Sync taking too long, proceeding to UI...');
+            setIsLoading(false);
+        }, 12000);
+
+        try {
+            await db.init(); // Fetch data from Supabase
+        } catch (e) {
+            console.error('[SYSTEM] Error during initialization:', e);
+        } finally {
+            clearTimeout(loaderTimeout);
+            setIsLoading(false);
+        }
+        
         checkStatus();
         await syncLiveSlotsToAi();
 
@@ -459,13 +475,7 @@ const App: React.FC = () => {
   }
 
   return (
-    <HashRouter
-      future={{
-        v7_startTransition: true,
-        v7_relativeSplatPath: true,
-      }}
-    >
-      <div className="flex h-screen bg-darker text-slate-100 font-sans overflow-hidden">
+    <div className="flex h-screen bg-darker text-slate-100 font-sans overflow-hidden">
         
         {/* --- SIDEBAR --- */}
         <div className={`transition-all duration-300 ease-in-out border-r border-slate-800 bg-slate-900 flex flex-col z-50 ${isSidebarOpen ? 'w-64' : 'w-20'} absolute md:relative h-full shadow-2xl`}>
@@ -628,7 +638,7 @@ const App: React.FC = () => {
                   </motion.div>
                 )}
               </AnimatePresence>
-              <Routes>
+            <Routes>
                 <Route path="/" element={<Dashboard />} />
                 <Route path="/sales" element={<Sales showToast={showToast} />} />
                 <Route path="/bookings" element={<BookingManager showToast={showToast} />} />
@@ -653,30 +663,32 @@ const App: React.FC = () => {
             {/* Toast Notifications */}
             <div className="fixed bottom-6 right-6 z-[200] flex flex-col gap-3 pointer-events-none">
                 <AnimatePresence>
-                    {toasts.map(toast => (
-                        <motion.div
-                            key={toast.id}
-                            initial={{ opacity: 0, x: 50, scale: 0.9 }}
-                            animate={{ opacity: 1, x: 0, scale: 1 }}
-                            exit={{ opacity: 0, x: 20, scale: 0.9 }}
-                            className={`pointer-events-auto flex items-center gap-3 px-4 py-3 rounded-xl shadow-2xl border backdrop-blur-md min-w-[280px] ${
-                                toast.type === 'success' ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400' :
-                                toast.type === 'error' ? 'bg-red-500/10 border-red-500/20 text-red-400' :
-                                'bg-cyan-500/10 border-cyan-500/20 text-cyan-400'
-                            }`}
-                        >
-                            {toast.type === 'success' && <CheckCircle2 size={18} />}
-                            {toast.type === 'error' && <AlertCircle size={18} />}
-                            {toast.type === 'info' && <Info size={18} />}
-                            <p className="text-xs font-bold">{toast.msg}</p>
-                        </motion.div>
-                    ))}
+                    {toasts.map(toast => {
+                        const typeStyles = toast.type === 'success' 
+                            ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400' 
+                            : toast.type === 'error' 
+                                ? 'bg-red-500/10 border-red-500/20 text-red-400' 
+                                : 'bg-cyan-500/10 border-cyan-500/20 text-cyan-400';
+                        
+                        return (
+                            <motion.div
+                                key={toast.id}
+                                initial={{ opacity: 0, x: 50, scale: 0.9 }}
+                                animate={{ opacity: 1, x: 0, scale: 1 }}
+                                exit={{ opacity: 0, x: 20, scale: 0.9 }}
+                                className={`pointer-events-auto flex items-center gap-3 px-4 py-3 rounded-xl shadow-2xl border backdrop-blur-md min-w-[280px] ${typeStyles}`}
+                            >
+                                {toast.type === 'success' && <CheckCircle2 size={18} />}
+                                {toast.type === 'error' && <AlertCircle size={18} />}
+                                {toast.type === 'info' && <Info size={18} />}
+                                <p className="text-xs font-bold">{toast.msg}</p>
+                            </motion.div>
+                        );
+                    })}
                 </AnimatePresence>
             </div>
         </div>
-
       </div>
-    </HashRouter>
   );
 };
 
