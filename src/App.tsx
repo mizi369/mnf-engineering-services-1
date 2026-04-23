@@ -582,7 +582,7 @@ const App: React.FC = () => {
         </div>
 
         {/* --- MAIN CONTENT AREA --- */}
-        <div className={`flex-1 bg-darker relative overflow-hidden flex flex-col h-full w-full transition-all duration-300 ${isSidebarOpen ? 'md:ml-0' : 'md:ml-0'}`}>
+        <div className={`flex-1 bg-slate-950 relative overflow-hidden flex flex-col h-full w-full transition-all duration-300 ${isSidebarOpen ? 'md:ml-0' : 'md:ml-0'}`}>
            
            {/* GLOBAL WHATSAPP AI STATUS HEADER */}
            <div className="bg-slate-900 border-b border-slate-800 px-4 py-2 flex justify-between items-center z-40 sticky top-0 shadow-md h-12 shrink-0">

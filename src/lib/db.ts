@@ -75,6 +75,8 @@ export const db = {
       const data = localStorage.getItem(table);
       let items = data ? JSON.parse(data) : [];
       
+      if (!Array.isArray(items)) items = [];
+      
       // Self-healing: Ensure all items have an ID
       let changed = false;
       items = items.map((i: any) => {
