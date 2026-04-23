@@ -2,11 +2,16 @@
 import React from 'react';
 
 // Since we are using Vite middleware, the backend is on the same origin as the frontend
-// But for Vercel/GitHub Pages, we might need a fixed URL
+// For Vercel/GitHub deployments, we auto-point to the primary Cloud Run backend
 const meta = import.meta as any;
-export const BACKEND_URL = (meta.env?.VITE_BACKEND_URL) || window.location.origin;
+const CLOUD_RUN_URL = 'https://ais-pre-phpn4gkcc2yciznnf6fkpl-75610787709.asia-southeast1.run.app';
 
-console.log(`[SYSTEM] Backend Target: ${BACKEND_URL}`);
+export const BACKEND_URL = (meta.env?.VITE_BACKEND_URL) || 
+  (window.location.hostname.includes('vercel.app') || window.location.hostname.includes('github.io') 
+    ? CLOUD_RUN_URL 
+    : window.location.origin);
+
+console.log(`[SYSTEM] Neural Backend Target: ${BACKEND_URL}`);
 
 export const COLORS = {
   primary: '#D32F2F', // Red
