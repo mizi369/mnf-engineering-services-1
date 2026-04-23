@@ -3,12 +3,17 @@ import { createClient } from '@supabase/supabase-js';
 
 // Safe environment variable retrieval for browser environments
 const getEnv = (key: string, fallback: string = '') => {
-  // Check if process.env exists (Node/Bundled env)
-  if (typeof process !== 'undefined' && process.env && process.env[key]) {
-    return process.env[key];
+  // Safe check for process and process.env
+  try {
+    if (typeof process !== 'undefined' && process.env && process.env[key]) {
+      return process.env[key];
+    }
+  } catch (e) {
+    // Ignore access errors
   }
-  // Hardcoded fallback for Supabase URL from provided context
-  if (key === 'SUPABASE_URL') return 'https://scnbjrkwrgshihgnixvu.supabase.co';
+  
+  // Specific fallback for URL
+  if (key === 'SUPABASE_URL' && !fallback) return 'https://scnbjrkwrgshihgnixvu.supabase.co';
   return fallback;
 };
 

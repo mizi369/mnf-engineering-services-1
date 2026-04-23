@@ -5,7 +5,7 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 export default defineConfig({
-  base: './',
+  base: '/',
   plugins: [react()],
   resolve: {
     dedupe: ['react', 'react-dom', 'framer-motion'],
@@ -14,9 +14,9 @@ export default defineConfig({
     include: ['framer-motion'],
   },
   define: {
-    'process.env.SUPABASE_URL': JSON.stringify(process.env.SUPABASE_URL),
-    'process.env.SUPABASE_KEY': JSON.stringify(process.env.SUPABASE_KEY),
-    'process.env.GEMINI_API_KEY': JSON.stringify(process.env.GEMINI_API_KEY),
+    'process.env.SUPABASE_URL': JSON.stringify(process.env.SUPABASE_URL || ''),
+    'process.env.SUPABASE_KEY': JSON.stringify(process.env.SUPABASE_KEY || ''),
+    'process.env.GEMINI_API_KEY': JSON.stringify(process.env.GEMINI_API_KEY || ''),
   },
   build: {
     chunkSizeWarningLimit: 2000,
