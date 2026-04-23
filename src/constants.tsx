@@ -2,7 +2,9 @@
 import React from 'react';
 
 // Since we are using Vite middleware, the backend is on the same origin as the frontend
-export const BACKEND_URL = window.location.origin;
+// But for Vercel/GitHub Pages, we might need a fixed URL
+const meta = import.meta as any;
+export const BACKEND_URL = (meta.env?.VITE_BACKEND_URL) || window.location.origin;
 
 console.log(`[SYSTEM] Backend Target: ${BACKEND_URL}`);
 
