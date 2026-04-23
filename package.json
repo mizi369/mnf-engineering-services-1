@@ -8,6 +8,7 @@
     "start": "tsx service.ts",
     "dev": "tsx service.ts",
     "build": "vite build",
+    "vercel-build": "vite build",
     "lint": "tsc --noEmit"
   },
   "dependencies": {
