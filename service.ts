@@ -128,6 +128,7 @@ let dashboardStats = {
     aiStatus: 'Active'
 };
 let recentMessages = [];
+let lastQrUrl = '';
 
 // Persistent AI Context - LIVE UPDATABLE
 let activeAiContext = {
@@ -201,6 +202,7 @@ async function loadNeuralMemory() {
 // ================= API ROUTES =================
 app.get('/api/status', (req, res) => res.json({ status: WA_STATUS }));
 app.get('/api/context', (req, res) => res.json(activeAiContext));
+app.get('/api/qr', (req, res) => res.json({ qr: lastQrUrl }));
 app.get('/api/admin', async (req, res) => {
     if (currentAdminInfo && currentAdminInfo.image) return res.json(currentAdminInfo);
     if (!client || !client.info) return res.json(currentAdminInfo || { name: 'Admin', phone: 'Offline', image: '' });
@@ -816,6 +818,7 @@ function startWhatsApp() {
 
   client.on('qr', (qr) => {
     qrcode.toDataURL(qr, { scale: 10 }).then(url => {
+        lastQrUrl = url;
         io.emit('qr-code', url);
         io.emit('stage-update', 'SCAN_QR');
     }).catch(err => {
@@ -945,6 +948,9 @@ function startWhatsApp() {
 
 io.on('connection', (socket) => {
     socket.emit('stage-update', WA_STATUS);
+    if (WA_STATUS === 'SCAN_QR' && lastQrUrl) {
+        socket.emit('qr-code', lastQrUrl);
+    }
     socket.emit('ai-status', isAutoReplyActive);
     socket.emit('dashboard-stats', dashboardStats);
     socket.emit('recent-messages', recentMessages);

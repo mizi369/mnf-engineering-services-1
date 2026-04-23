@@ -87,7 +87,13 @@ const WhatsAppMonitor: React.FC = () => {
         if(data.status) {
             setStatus(data.status);
             // Auto switch to connection tab if scan needed
-            if(data.status === 'SCAN_QR') setActiveTab('connection');
+            if(data.status === 'SCAN_QR') {
+                setActiveTab('connection');
+                // Initial QR fetch if already in SCAN_QR state
+                safeFetch('/api/qr', (qrData) => {
+                    if (qrData.qr) setQrCode(qrData.qr);
+                });
+            }
         } else {
             // Default to OFFLINE if no status returned
             setStatus('OFFLINE');
